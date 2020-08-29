@@ -1,0 +1,76 @@
+## http listener settings
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+{% for rule in http.rules %}
+{%- if rule.then.forward %}
+upstream {{ rule.then.forward.name }} {
+    {%- if rule.then.forward.stickiness %}
+    ip_hash;
+    {%- endif %}
+    {%- for tg in rule.then.forward.targets %}
+    server {{ 'unix:/var/run/nginx_%s_%d' % (rule.then.forward.name, loop.index) }}{{ ' weight=%d' % tg.weight if tg.weight else '' }};
+    {%- endfor %}
+}
+{%- endif %}
+server {
+    listen {{ http.listen }}{{ '  default_server' if rule.if.default_server }};
+    server_name {{ rule.if.host }};
+    {% if rule.then.forward %}
+    proxy_set_header Host               $host;
+    proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host   $host;
+    proxy_set_header X-Forwarded-Server $host;
+    proxy_set_header X-Real-IP          $remote_addr;
+
+    proxy_http_version          1.1;
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    {% endif %}
+    {%- for path in rule.if.pathes %}
+    location {{ path }} {
+        {%- if rule.if.headers %}
+        {%- for header in rule.if.headers %}
+        if ($http_{{ header|replace('-','_')|lower() }} = "{{ rule.if.headers[header] }}") {
+            proxy_pass http://{{ rule.then.forward.name }};
+            break;
+        }
+        {%- endfor %}
+        {%- else %}
+        proxy_pass http://{{ rule.then.forward.name }};
+        {%- endif %}
+    }
+    {%- endfor %}
+    {%- if rule.then.response %}
+    location / {
+       {%- if rule.then.response.content_type %}
+       default_type {{ rule.then.response.content_type }};
+       {%- endif %}
+       return {{ rule.then.response.code }}{{ ' \'%s\'' % rule.then.response.message if rule.then.response.message }};
+    }
+    {%- endif %}
+}
+{%- if rule.then.forward %}
+{%- for tg in rule.then.forward.targets %}
+server {
+    listen {{ 'unix:/var/run/nginx_%s_%d' % (rule.then.forward.name, loop.index) }};
+    server_name {{ rule.if.host }};
+    {% if rule.then.forward %}
+    proxy_set_header Host               $host;
+    proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host   $host;
+    proxy_set_header X-Forwarded-Server $host;
+    proxy_set_header X-Real-IP          $remote_addr;
+
+    proxy_http_version          1.1;
+    proxy_set_header Upgrade    $http_upgrade;
+    proxy_set_header Connection $connection_upgrade;
+    {% endif %}
+    location / {
+        proxy_pass {{ tg.target }};
+    }
+}
+{%- endfor %}
+{%- endif %}
+{% endfor %}

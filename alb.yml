@@ -1,0 +1,52 @@
+---
+http:
+  listen: 80
+  rules:
+    - if:
+        host: app01.example.com
+        pathes: [ "/" ]
+      then:
+        forward:
+          name: tg-app01
+          targets:
+            - target: http://docker0:21080
+              weight: 30
+            - target: http://docker0:22080
+          stickiness: true
+    - if:
+        host: app02.example.com
+        pathes: [ "/" ]
+      then:
+        forward:
+          name: tg-app02
+          targets:
+            - target: http://docker0:20080
+          stickiness: true
+    - if:
+        host: _
+        default_server: true
+      then:
+        response:
+          code: 404
+          message: No host matched.
+          content_type: text/plain
+
+guide:
+  listen: 80
+  rules:
+    - if:
+        host: xxx.example.com
+        pathes:
+          - /api1
+          - /api2
+        headers:
+          X-Backend-Version: "2"
+      then:
+        forward:
+          name: tg-xxx
+          targets:
+            - target: http://docker0:8080
+              weight: 30
+            - target: http://docker0:8081
+          stickiness: true
+
