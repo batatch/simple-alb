@@ -8,6 +8,9 @@ help: ## Show help
 .PHONY: build
 build:  ## Build ALB.
 	mkdir -p conf.d build
+	if test ! -f alb.yml ; then \
+		echo "Please prepare alb.yml setting." ; exit 1 ; \
+	fi
 	python bin/y1.pl alb.yml > build/alb_y1.yml
 	python bin/j2.pl src/default.conf.j2 build/alb_y1.yml > conf.d/default.conf
 
@@ -35,6 +38,9 @@ test:   ## Test ALB.
 	sh test/run.sh 80 app02.example.com
 	sh test/run.sh 80 app02.example.com/api/exec
 	sh test/run.sh 80 unknown.example.com
+
+clean:
+	rm -rf build conf.d
 
 
 # EOF
