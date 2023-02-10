@@ -15,6 +15,15 @@ http:
           stickiness: true
     - if:
         host: app02.example.com
+        pathes: [ "/api", "/api/*" ]
+      then:
+        forward:
+          name: tg-app02-api
+          targets:
+            - target: http://docker0:20082
+          stickiness: true
+    - if:
+        host: app02.example.com
         pathes: [ "/" ]
       then:
         forward:
