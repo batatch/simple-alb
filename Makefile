@@ -25,10 +25,9 @@ login:  ## Login to ALB.
 
 .PHONY: test
 test:   ## Test ALB.
-	sh test/run.sh 80 \
-		app01.example.com \
-		app02.example.com \
-		unknown.example.com
+	sh test/run.sh 80 app01.example.com
+	sh test/run.sh 80 app02.example.com
+	sh test/run.sh 80 unknown.example.com
 
 
 # EOF
