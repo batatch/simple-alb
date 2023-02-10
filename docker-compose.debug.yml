@@ -1,0 +1,10 @@
+version: '3'
+services:
+  alb:
+    command:
+      - nginx-debug
+      - -g
+      - "daemon off;"
+    volumes:
+      - ./test/nginx-debug.conf:/etc/nginx/nginx.conf:ro
+

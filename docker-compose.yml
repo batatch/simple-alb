@@ -8,5 +8,4 @@ services:
       - ./conf.d:/etc/nginx/conf.d
     extra_hosts:
       - "docker0:${DOCKER0_ADDRESS}"
-    restart: always
 

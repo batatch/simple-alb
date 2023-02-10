@@ -13,6 +13,10 @@ up:     ## Start ALB.
 	env DOCKER0_ADDRESS=$$( ip route | awk '/docker0/ {print $$9}' ) \
 	docker-compose up -d
 
+debug:  ## Start ALB by debug mode.
+	env DOCKER0_ADDRESS=$$( ip route | awk '/docker0/ {print $$9}' ) \
+	docker-compose -f docker-compose.yml -f docker-compose.debug.yml up -d
+
 down:   ## Stop ALB.
 	env DOCKER0_ADDRESS=$$( ip route | awk '/docker0/ {print $$9}' ) \
 	docker-compose down
